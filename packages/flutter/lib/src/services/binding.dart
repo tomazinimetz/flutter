@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -34,7 +33,8 @@ mixin ServicesBinding on BindingBase, SchedulerBinding {
     _restorationManager = createRestorationManager();
     _initKeyboard();
     initLicenses();
-    SystemChannels.system.setMessageHandler((dynamic message) => handleSystemMessage(message as Object));
+    SystemChannels.system.setMessageHandler(
+        (dynamic message) => handleSystemMessage(message as Object));
     SystemChannels.lifecycle.setMessageHandler(_handleLifecycleMessage);
     SystemChannels.platform.setMethodCallHandler(_handlePlatformMessage);
     readInitialLifecycleStateFromNativeWindow();
@@ -58,7 +58,8 @@ mixin ServicesBinding on BindingBase, SchedulerBinding {
     _keyboard = HardwareKeyboard();
     _keyEventManager = KeyEventManager(_keyboard, RawKeyboard.instance);
     window.onKeyData = _keyEventManager.handleKeyData;
-    SystemChannels.keyEvent.setMessageHandler(_keyEventManager.handleRawKeyMessage);
+    SystemChannels.keyEvent
+        .setMessageHandler(_keyEventManager.handleRawKeyMessage);
   }
 
   /// The default instance of [BinaryMessenger].
@@ -164,19 +165,23 @@ mixin ServicesBinding on BindingBase, SchedulerBinding {
             // the server and client.
             ? rootBundle.loadString('NOTICES', cache: false)
             : () async {
-              // The compressed version doesn't have a more common .gz extension
-              // because gradle for Android non-transparently manipulates .gz files.
-              final ByteData licenseBytes = await rootBundle.load('NOTICES.Z');
-              List<int> bytes = licenseBytes.buffer.asUint8List();
-              bytes = gzip.decode(bytes);
-              return utf8.decode(bytes);
-            }(),
+                // The compressed version doesn't have a more common .gz extension
+                // because gradle for Android non-transparently manipulates .gz files.
+                final ByteData licenseBytes =
+                    await rootBundle.load('NOTICES.Z');
+                List<int> bytes = licenseBytes.buffer.asUint8List();
+                bytes = gzip.decode(bytes);
+                return utf8.decode(bytes);
+              }(),
       );
     }, Priority.animation);
     await rawLicenses.future;
-    final Completer<List<LicenseEntry>> parsedLicenses = Completer<List<LicenseEntry>>();
+    final Completer<List<LicenseEntry>> parsedLicenses =
+        Completer<List<LicenseEntry>>();
     scheduleTask(() async {
-      parsedLicenses.complete(compute<String, List<LicenseEntry>>(_parseLicenses, await rawLicenses.future, debugLabel: 'parseLicenses'));
+      parsedLicenses.complete(compute<String, List<LicenseEntry>>(
+          _parseLicenses, await rawLicenses.future,
+          debugLabel: 'parseLicenses'));
     }, Priority.animation);
     await parsedLicenses.future;
     yield* Stream<LicenseEntry>.fromIterable(await parsedLicenses.future);
@@ -249,7 +254,8 @@ mixin ServicesBinding on BindingBase, SchedulerBinding {
     if (lifecycleState != null) {
       return;
     }
-    final AppLifecycleState? state = _parseAppLifecycleMessage(window.initialLifecycleState);
+    final AppLifecycleState? state =
+        _parseAppLifecycleMessage(window.initialLifecycleState);
     if (state != null) {
       handleAppLifecycleStateChanged(state);
     }
@@ -323,13 +329,13 @@ mixin ServicesBinding on BindingBase, SchedulerBinding {
   void setSystemUiChangeCallback(SystemUiChangeCallback? callback) {
     _systemUiChangeCallback = callback;
   }
-
 }
 
 /// Signature for listening to changes in the [SystemUiMode].
 ///
 /// Set by [SystemChrome.setSystemUIChangeCallback].
-typedef SystemUiChangeCallback = Future<void> Function(bool systemOverlaysAreVisible);
+typedef SystemUiChangeCallback = Future<void> Function(
+    bool systemOverlaysAreVisible);
 
 /// The default implementation of [BinaryMessenger].
 ///
@@ -346,8 +352,7 @@ class _DefaultBinaryMessenger extends BinaryMessenger {
     ui.PlatformMessageResponseCallback? callback,
   ) async {
     ui.channelBuffers.push(channel, message, (ByteData? data) {
-      if (callback != null)
-        callback(data);
+      if (callback != null) callback(data);
     });
   }
 
@@ -363,7 +368,8 @@ class _DefaultBinaryMessenger extends BinaryMessenger {
     // access at this location seems to be the least bad option.
     // TODO(ianh): Use ServicesBinding.instance once we have better diagnostics
     // on that getter.
-    ui.PlatformDispatcher.instance.sendPlatformMessage(channel, message, (ByteData? reply) {
+    ui.PlatformDispatcher.instance.sendPlatformMessage(channel, message,
+        (ByteData? reply) {
       try {
         completer.complete(reply);
       } catch (exception, stack) {
@@ -371,7 +377,8 @@ class _DefaultBinaryMessenger extends BinaryMessenger {
           exception: exception,
           stack: stack,
           library: 'services library',
-          context: ErrorDescription('during a platform message response callback'),
+          context:
+              ErrorDescription('during a platform message response callback'),
         ));
       }
     });
@@ -383,7 +390,8 @@ class _DefaultBinaryMessenger extends BinaryMessenger {
     if (handler == null) {
       ui.channelBuffers.clearListener(channel);
     } else {
-      ui.channelBuffers.setListener(channel, (ByteData? data, ui.PlatformMessageResponseCallback callback) async {
+      ui.channelBuffers.setListener(channel,
+          (ByteData? data, ui.PlatformMessageResponseCallback callback) async {
         ByteData? response;
         try {
           response = await handler(data);
